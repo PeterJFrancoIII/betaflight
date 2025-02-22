@@ -211,6 +211,20 @@ vector3_t *matrixTrnVectorMul(vector3_t *result, const matrix33_t *mat, const ve
 
 matrix33_t *buildRotationMatrix(matrix33_t *result, const fp_angles_t *rpy)
 {
+    // The original rotation matrix multipliction is not correct. 
+    // Rx =[1    0     0]
+    //     [0 cosx -sinx]
+    //     [0 sinx  cosx]
+    // Ry = [cosy 0 siny]
+    //      [0    1    0]
+    //      [-siny 0 cosy]
+    // Rz = [cosz -sinz 0]
+    //      [sinz  cosz 0]
+    //      [0      0   1]
+    // RxRyRz will be
+    // [cosy*cosz                    cosy*sinz                      -siny]
+    // [-cosx*sinz+sinx*siny*cosz    cosx*cosz+sinx*siny*sinz       sinx*cosy]
+    // [sinx*sinz+cosx*siny*cosz     -sinx*cosz+cosx*siny*sinz      cosx*cosy]
     const float cosx = cos_approx(rpy->angles.roll);
     const float sinx = sin_approx(rpy->angles.roll);
     const float cosy = cos_approx(rpy->angles.pitch);
@@ -219,13 +233,13 @@ matrix33_t *buildRotationMatrix(matrix33_t *result, const fp_angles_t *rpy)
     const float sinz = sin_approx(rpy->angles.yaw);
 
     result->m[0][X] = cosz * cosy;
-    result->m[0][Y] = -cosy * sinz;
-    result->m[0][Z] = siny;
-    result->m[1][X] = sinz * cosx + sinx * cosz * siny;
-    result->m[1][Y] = cosz * cosx - sinx * sinz * siny;
-    result->m[1][Z] = -sinx * cosy;
-    result->m[2][X] = sinx * sinz - cosz * cosx * siny;
-    result->m[2][Y] = sinx * cosz + sinz * cosx * siny;
+    result->m[0][Y] = cosy * sinz;
+    result->m[0][Z] = -siny;
+    result->m[1][X] = -sinz * cosx + sinx * cosz * siny;
+    result->m[1][Y] = cosz * cosx +sinx * sinz * siny;
+    result->m[1][Z] = sinx * cosy;
+    result->m[2][X] = sinx * sinz + cosz * cosx * siny;
+    result->m[2][Y] = -sinx * cosz + sinz * cosx * siny;
     result->m[2][Z] = cosy * cosx;
 
     return result;
